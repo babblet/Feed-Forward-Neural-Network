@@ -2,8 +2,6 @@
 //  fix misspellings
 //  Make it backprop work
 //  Implement error checking
-//  Decide on public and private variables
-//  Find better method for rand?
 //  Make train able to hande several iterations with an array of inputs
 //  Organisize
 
