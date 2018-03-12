@@ -1,20 +1,35 @@
+//** Notes ** 
+//  fix misspellings
+//  Make it backprop work
+//  Implement error checking
+//  Decide on public and private variables
+//  Find better method for rand?
+//  Make train able to hande several iterations with an array of inputs
+//  Organisize
+
 #include <cmath>
 #include <time.h>
 #include <stdlib.h>
 #include <iostream>
+#include <vector>
 
-#define DEPTH 3
-#define PARAM_SIZE 2
-#define CONSTANT 0.05
-#define PI 3.1415926535
-#define DATA_SIZE 30000
-
-bool write_to_serial(float *input, int input_size, float *target)
+bool write_to_serial(int iteration ,std::vector<float> input, std::vector<float> target, std::vector<float> output)
 {
-	for(int index = 0; index < input_size; index++)
-	{
-		std::cout << index << " | " << input[index] << " | " << target[index] << std::endl;
-	}
+	std::cout << "iter = " << iteration << " | ";
+
+	for(int index = 0; index < input.size(); index++)
+		std::cout << "Input[" << index << "] = "<< input[index] << std::endl;
+
+	std::cout << "target = ";
+	for(int index = 0; index < target.size(); index++)
+		std::cout << target[index];
+
+	std::cout << " | output = ";
+	for(int index = 0; index < output.size(); index++)
+		std::cout << output[index];
+	
+	std::cout << std::endl;
+	return 0;
 }
 
 //Used in randomize_weigths();
@@ -24,28 +39,21 @@ float random_weight(){
 	return ((float)rand() / ((float)RAND_MAX / 2)) - 1; 
 }
 
-//** Notes ** 
-//  Implement error checking
-//  Decide on public and private variables
-//  Find better method for rand?
-//  Make train able to hande several iterations with an array of inputs
-//
 // NNClass:
 //  Feedforward Neural Network with dynamic sizing.
 //  Able to hande dynamic size of input. 
 //  Multiple inputs needs to be in same size.
 //  Can only handle input in vector form.
 //  Free sizing of hidden layers and output.
-
 class NNClass
 {
 	public:
-		NNClass(int depth, float constant, int input_size, int * layer_size); //Create a Neural Network with specified size
+		NNClass(int depth, float constant, int input_size, std::vector<int> layer_size); //Create a Neural Network with specified size
 
 		// load(string filepath);         // Load Neural Network
 		// save(string path, string filename);      // Save Neural Network
-		void train(float ** input, float ** target, int interations);   // Train Feedforward Neural Network with input as an float array
-		bool destroy();
+		void train(std::vector<std::vector<float> > input, std::vector<std::vector<float> > target, int interations);   // Train Feedforward Neural Network with input as an float array
+		//bool destroy();
 
 	private:
 		//Layer Data, Keeps the information of a single layer.
@@ -53,24 +61,26 @@ class NNClass
 		//Also keeps the information of the delta value for the neurons in the layer.
 		struct Layer_struct
 		{
-			float *  theta;
-			float *  delta;
-			float *  output;
-			float ** weight;
-		} * layer;
+			std::vector<float> theta;
+			std::vector<float> delta;
+			std::vector<float> output;
+			std::vector<std::vector<float> > weight;
+		};
+
+		std::vector<Layer_struct> layer;
+		std::vector<int> layer_size; // Holds the number of neurons in each layer
 
 		float constant;   // Learning rate
 		int depth;    // Depth of current Neural Network
 		int input_size;   // Holds the size of the given input
-		int * layer_size; // Holds the number of neurons in each layer
 
 		bool allocate_layers();   // Allocates the layer struct
 		bool randomize_weigths(); // Randomizes weights
-		bool backpropagation(float * input, float * target);    // Backpropagation algorithm taken from Lars Asplund 
-		float activation(int layer, int index, float * input);    // Needs to be specified.
+		bool backpropagation(std::vector<float> input, std::vector<float> target);    // Backpropagation algorithm taken from Lars Asplund 
+		float activation(int layer, int index, std::vector<float> input);    // Needs to be specified.
 };
 
-NNClass::NNClass(int depth, float constant, int input_size, int * layer_size)
+NNClass::NNClass(int depth, float constant, int input_size, std::vector<int> layer_size)
 {
 	this->depth = depth;
 	this->constant = constant;
@@ -78,14 +88,13 @@ NNClass::NNClass(int depth, float constant, int input_size, int * layer_size)
 	this->layer_size = layer_size;
 
 	this->allocate_layers();
-
 	this->randomize_weigths();
 }
 
 //NNClass::load(string filepath){};
 //NNClass::save(string path, string filename){};
 
-void NNClass::train(float ** input,  float ** target, int iterations)
+void NNClass::train(std::vector<std::vector<float> > input, std::vector<std::vector<float> > target, int iterations)
 {
 	for(int data = 0; data < iterations; data++)
 	{
@@ -110,14 +119,15 @@ void NNClass::train(float ** input,  float ** target, int iterations)
 				}
 			}
 		}
-		write_to_serial(this->layer[this->depth - 1].output, this->layer_size[this->depth - 1], target[data]);
+		write_to_serial(data ,input[data], target[data], this->layer[this->depth - 1].output);
 	}
 }
 
 bool NNClass::allocate_layers()
 {
 	//Allocate layer pointer array of set depth
-	this->layer = (NNClass::Layer_struct *) calloc(this->depth, sizeof(this->layer));
+	this->layer.resize(this->depth);
+	
 	//Allocate layers.
 	for(int layer = 0; layer < this->depth; layer++)
 	{
@@ -126,22 +136,28 @@ bool NNClass::allocate_layers()
 		else          amount_weight_groups = this->input_size;            // Input layer
 
 		//Weight groups
-		this->layer[layer].weight = (float **) calloc(amount_weight_groups, sizeof(float *));
+		this->layer[layer].weight.resize(amount_weight_groups, std::vector<float>(this->layer_size[layer])); 
 
-		//Weights
-		for(int weight_group = 0; weight_group < amount_weight_groups; weight_group++)
-			this->layer[layer].weight[weight_group] = (float *) calloc(this->layer_size[layer], sizeof(float));
-
-		//Neurons
-		this->layer[layer].theta  = (float *) calloc(this->layer_size[layer], sizeof(float));
-		this->layer[layer].delta  = (float *) calloc(this->layer_size[layer], sizeof(float));
-		this->layer[layer].output = (float *) calloc(this->layer_size[layer], sizeof(float));
+		//Weights | set to 0
+		//for(int weight_group = 0; weight_group < amount_weight_groups; weight_group++)
+		//{
+		//	this->layer[layer].weight[weight_group].resize(this->layer_size[layer]); 
+		//	std::cout << weight_group << " weight_group" << std::endl;
+		//}
+			
+		//Neurons | set to 0
+		this->layer[layer].theta.resize(this->layer_size[layer], 0); 
+		this->layer[layer].delta.resize(this->layer_size[layer], 0);  
+		this->layer[layer].output.resize(this->layer_size[layer], 0);
 	}
+
 	return true;
 }
 
-bool NNClass::destroy()
+//Is it needed to free Vectors??
+/*bool NNClass::destroy()
 {
+
 	for(int layer = 0; layer < this->depth; layer++)
 	{
 		int amount_weight_group;
@@ -161,6 +177,8 @@ bool NNClass::destroy()
 	std::cout << "Free done" << std::endl;
 	return true;
 }
+*/
+
 
 bool NNClass::randomize_weigths()
 {
@@ -177,7 +195,7 @@ bool NNClass::randomize_weigths()
 		{
 			for(int weight = 0; weight < this->layer_size[layer]; weight++)
 			{
-				this->layer[0].weight[weight_group][weight] = random_weight();
+				this->layer[layer].weight[weight_group][weight] = random_weight();
 			}
 		}
 	}
@@ -185,7 +203,7 @@ bool NNClass::randomize_weigths()
 }
 
 //Com
-bool NNClass::backpropagation(float * input, float * target)
+bool NNClass::backpropagation(std::vector<float> input, std::vector<float> target)
 {
 	//Setup pointers for easier reading??
 	
@@ -203,10 +221,9 @@ bool NNClass::backpropagation(float * input, float * target)
 		for(int index = 0; index < this->layer_size[layer]; index++)
 		{
 			float sum = 0;
-
 			//Calculate sum of the previous deltas and weights
 			for(int weight_index = 0; weight_index < this->layer_size[layer + 1]; weight_index++)
-				sum += this->layer[layer + 1].delta[weight_index] * this->layer[layer].weight[index][weight_index];
+				sum += this->layer[layer + 1].delta[weight_index] * this->layer[layer + 1].weight[index][weight_index];
 
 			//Calculate delta for current layer and group
 			this->layer[layer].delta[index] = this->layer[layer].output[index] * (1 - this->layer[layer].output[index]) * sum;
@@ -217,7 +234,7 @@ bool NNClass::backpropagation(float * input, float * target)
 	for(int layer = 0; layer < this->depth; layer++)
 	{
 		int amount_weight_group;
-		float *layer_input;
+		std::vector<float> layer_input;
 		if(layer > 0){
 			amount_weight_group = this->layer_size[layer - 1];
 			layer_input = this->layer[layer - 1].output;
@@ -239,10 +256,9 @@ bool NNClass::backpropagation(float * input, float * target)
 	}
 	return true;
 }
-
-//Round activation | 0.99 -> 1 | 0.01 -> 0 |
-float NNClass::activation(int layer, int index, float * input)
+float NNClass::activation(int layer, int index, std::vector<float> input)
 {
+	
 	//Setup
 	float sum = 0;
 	int amount_weight_group;
@@ -251,57 +267,74 @@ float NNClass::activation(int layer, int index, float * input)
 	else          amount_weight_group = this->input_size;
 
 	//Calculate
-	
 	for(int weight_group = 0; weight_group < amount_weight_group; weight_group++)
 		sum =+ this->layer[layer].weight[weight_group][index] * input[weight_group];
 
-	return 1/(1+exp(-(sum + this->layer[layer].theta[index])));
+	//Sigmoid activation
+	//return 1/(1+exp(-(sum + this->layer[layer].theta[index])));
+
+	//Step activation | Threshold activation
+	if(sum > 0) return 1.0f;
+	else 	    return 0.0f;
 }
 
 
+#define INPUT_SIZE 1
+#define DEPTH 4
+#define OUTPUT_SIZE 8
+#define DATA_SIZE 1000000
+
+#include <bitset>
+std::string binary(int decimal)
+{
+    return std::bitset<8>(decimal).to_string(); //to binary
+}
+
+//Deciam to binary network
 int main()
 {
 	srand(time(NULL));
 	//Var
-	int cos_param;
-	float cos_target;
-	int sin_param;
-	float sin_target;
+	int decimal;
 
-	float ** input  = (float **) calloc(DATA_SIZE, sizeof(float *));
-	float ** target = (float **) calloc(DATA_SIZE, sizeof(float *));
+	std::string string_target;
+
+	std::vector<std::vector<float>> input(DATA_SIZE); 
+	std::vector<std::vector<float>> target(DATA_SIZE); 
+	
 	//Network setup
-	int layer_size[DEPTH] = {3, 3, PARAM_SIZE};
-	NNClass NN(DEPTH, CONSTANT, PARAM_SIZE, layer_size);
+	std::vector<int> layer_size(DEPTH);
+	layer_size = {3, 3, 3, 8};
 
-	//Set data
-	
-	
+	NNClass NN(DEPTH, 1000, INPUT_SIZE, layer_size);
+
+	//Create Data
 	for(int data = 0; data < DATA_SIZE; data++)
 	{
-		cos_param = rand()%360;
-		sin_param = rand()%360;
-		cos_target = cos(cos_param*PI/180);
-		sin_target = sin(sin_param*PI/180);
+		decimal = (rand() % 256);
+		string_target = binary(decimal);
 
-		input[data]  = (float *) calloc(PARAM_SIZE, sizeof(float));
-		target[data] = (float *) calloc(PARAM_SIZE, sizeof(float));
+		input[data].resize(INPUT_SIZE); 
+		target[data].resize(OUTPUT_SIZE); 
 
-		input [data][0] = (float)cos_param;
-		input [data][1] = (float)sin_param;
-		target[data][0] = cos_target;
-		target[data][1] = sin_target;
+		input [data][0] = decimal;
+		
+		//Hardcode testing
+		target[data][0] = string_target[0] - '0'; 
+		target[data][1] = string_target[1] - '0'; 
+		target[data][2] = string_target[2] - '0'; 
+		target[data][3] = string_target[3] - '0'; 
+		target[data][4] = string_target[4] - '0'; 
+		target[data][5] = string_target[5] - '0'; 
+		target[data][6] = string_target[6] - '0'; 
+		target[data][7] = string_target[7] - '0'; 
 	}
 	
 	//Start a training;
 	NN.train(input, target, DATA_SIZE);
-	NN.destroy();
+	//NN.destroy();
 
-	//Free data
-	for(int data = 0; data < DATA_SIZE; data++)
-	{
-		free(input[data]);
-		free(target[data]);
-	}
+	//Free data vetors???
+
 	return 0;
 }
