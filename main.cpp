@@ -2,7 +2,6 @@
 //  fix misspellings
 //  Make it backprop work
 //  Implement error checking
-//  Make train able to hande several iterations with an array of inputs
 //  Organisize
 
 #include <cmath>
