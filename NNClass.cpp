@@ -4,11 +4,7 @@
 //  Implement error checking
 //  Organisize
 
-#include <cmath>
-#include <time.h>
-#include <stdlib.h>
-#include <iostream>
-#include <vector>
+#include "NNClass.h"
 
 bool write_to_serial(int iteration ,std::vector<float> input, std::vector<float> target, std::vector<float> output)
 {
@@ -36,46 +32,6 @@ float random_weight(){
 	return ((float)rand() / ((float)RAND_MAX / 2)) - 1; 
 }
 
-// NNClass:
-//  Feedforward Neural Network with dynamic sizing.
-//  Able to hande dynamic size of input. 
-//  Multiple inputs needs to be in same size.
-//  Can only handle input in vector form.
-//  Free sizing of hidden layers and output.
-class NNClass
-{
-	public:
-		NNClass(int depth, float constant, int input_size, std::vector<int> layer_size); //Create a Neural Network with specified size
-
-		// load(string filepath);         // Load Neural Network
-		// save(string path, string filename);      // Save Neural Network
-		void train(std::vector<std::vector<float> > input, std::vector<std::vector<float> > target, int interations);   // Train Feedforward Neural Network with input as an float array
-		//bool destroy();
-
-	private:
-		//Layer Data, Keeps the information of a single layer.
-		//A layer is with the weights as input to a neuron and its output.
-		//Also keeps the information of the delta value for the neurons in the layer.
-		struct Layer_struct
-		{
-			std::vector<float> theta;
-			std::vector<float> delta;
-			std::vector<float> output;
-			std::vector<std::vector<float> > weight;
-		};
-
-		std::vector<Layer_struct> layer;
-		std::vector<int> layer_size; // Holds the number of neurons in each layer
-
-		float constant;   // Learning rate
-		int depth;    // Depth of current Neural Network
-		int input_size;   // Holds the size of the given input
-
-		bool allocate_layers();   // Allocates the layer struct
-		bool randomize_weigths(); // Randomizes weights
-		bool backpropagation(std::vector<float> input, std::vector<float> target);    // Backpropagation algorithm taken from Lars Asplund 
-		float activation(int layer, int index, std::vector<float> input);    // Needs to be specified.
-};
 
 NNClass::NNClass(int depth, float constant, int input_size, std::vector<int> layer_size)
 {
@@ -273,65 +229,4 @@ float NNClass::activation(int layer, int index, std::vector<float> input)
 	//Step activation | Threshold activation
 	if(sum > 0) return 1.0f;
 	else 	    return 0.0f;
-}
-
-
-#define INPUT_SIZE 1
-#define DEPTH 4
-#define OUTPUT_SIZE 8
-#define DATA_SIZE 1000000
-
-#include <bitset>
-std::string binary(int decimal)
-{
-    return std::bitset<8>(decimal).to_string(); //to binary
-}
-
-//Deciam to binary network
-int main()
-{
-	srand(time(NULL));
-	//Var
-	int decimal;
-
-	std::string string_target;
-
-	std::vector<std::vector<float>> input(DATA_SIZE); 
-	std::vector<std::vector<float>> target(DATA_SIZE); 
-	
-	//Network setup
-	std::vector<int> layer_size(DEPTH);
-	layer_size = {3, 3, 3, 8};
-
-	NNClass NN(DEPTH, 1000, INPUT_SIZE, layer_size);
-
-	//Create Data
-	for(int data = 0; data < DATA_SIZE; data++)
-	{
-		decimal = (rand() % 256);
-		string_target = binary(decimal);
-
-		input[data].resize(INPUT_SIZE); 
-		target[data].resize(OUTPUT_SIZE); 
-
-		input [data][0] = decimal;
-		
-		//Hardcode testing
-		target[data][0] = string_target[0] - '0'; 
-		target[data][1] = string_target[1] - '0'; 
-		target[data][2] = string_target[2] - '0'; 
-		target[data][3] = string_target[3] - '0'; 
-		target[data][4] = string_target[4] - '0'; 
-		target[data][5] = string_target[5] - '0'; 
-		target[data][6] = string_target[6] - '0'; 
-		target[data][7] = string_target[7] - '0'; 
-	}
-	
-	//Start a training;
-	NN.train(input, target, DATA_SIZE);
-	//NN.destroy();
-
-	//Free data vetors???
-
-	return 0;
 }
