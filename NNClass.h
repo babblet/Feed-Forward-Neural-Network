@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <iostream>
 
-// NNClass:
+//NNClass:
 //  Feedforward Neural Network with dynamic sizing.
 //  Able to hande dynamic size of input. 
 //  Multiple inputs needs to be in same size.
@@ -15,12 +15,11 @@
 class NNClass
 {
 	public:
-		NNClass(int depth, float constant, int input_size, std::vector<int> layer_size); //Create a Neural Network with specified size
-
-		// load(string filepath);         // Load Neural Network
+		NNClass(std::vector<std::vector<float> > &input, std::vector<std::vector<float> >, std::vector<int> &layer_size, float constant); //Create a Neural Network with specified size
+		
+		void train();   // Train Feedforward Neural Network with input as an float array
+		// load(string filepath);         	    // Load Neural Network
 		// save(string path, string filename);      // Save Neural Network
-		void train(std::vector<std::vector<float> > input, std::vector<std::vector<float> > target, int interations);   // Train Feedforward Neural Network with input as an float array
-		//bool destroy();
 
 	private:
 		//Layer Data, Keeps the information of a single layer.
@@ -34,16 +33,22 @@ class NNClass
 			std::vector<std::vector<float> > weight;
 		};
 
-		std::vector<Layer_struct> layer;
 		std::vector<int> layer_size; // Holds the number of neurons in each layer
+		std::vector<Layer_struct> layer;
+		std::vector<std::vector<float> > input;
+		std::vector<std::vector<float> > target;		
 
-		float constant;   // Learning rate
-		int depth;    // Depth of current Neural Network
-		int input_size;   // Holds the size of the given input
+		float constant; // Learning rate
+		int depth;    	// Depth of current Neural Network
+		int input_size; // Size of the given input
 
+		//Setup functions
 		bool allocate_layers();   // Allocates the layer struct
 		bool randomize_weigths(); // Randomizes weights
-		bool backpropagation(std::vector<float> input, std::vector<float> target);    // Backpropagation algorithm taken from Lars Asplund 
+
+		//Alghoritms
+		float cost();
+		bool backpropagation(std::vector<float> output, std::vector<float> target);   
 		float activation(int layer, int index, std::vector<float> input);    // Needs to be specified.
 };
 #endif
