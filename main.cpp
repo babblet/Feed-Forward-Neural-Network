@@ -22,7 +22,6 @@ int main()
 	//Network setup
 	std::vector<int> layer_size(DEPTH);
 	layer_size = {3, 3, 3, 8};
-	NNClass NN(DEPTH, 1000, INPUT_SIZE, layer_size);
 
 	//Create Data
 	for(int data = 0; data < DATA_SIZE; data++)
@@ -47,7 +46,8 @@ int main()
 	}
 	
 	//Start training;
-	NN.train(input, target, DATA_SIZE);
+	NNClass NN(input, target, layer_size, 0.005);
+	NN.train();
 	
 	//NN.destroy();
 

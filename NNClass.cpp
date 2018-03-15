@@ -21,9 +21,9 @@ bool write(int iteration ,std::vector<float> input, std::vector<float> target, s
 
 	std::cout << " | output = ";
 	for(int index = 0; index < output.size(); index++)
-		std::cout << output[index];
-	
+		std::cout << output[index] << ", ";
 	std::cout << std::endl;
+
 	return 0;
 }
 
@@ -54,18 +54,20 @@ void NNClass::train()
 		for(int layer = 0; layer < this->depth; layer++)
 		{
 			
-			float * layer_input;
-			if(layer > 0) layer_input = this->layer[layer - 1].output;
+			std::vector<float> layer_input;
+			if(layer > 0) layer_input = this->layer[layer - 1].output[data];
 			else          layer_input = this->input[data];
 
 			for(int index = 0; index < this->layer_size[layer]; index++)
-					this->layer[layer].output[index] = this->activation(layer, index, layer_input);
+					this->layer[layer].output[data][index] = this->activation(layer, index, layer_input);
 						
 		}
-		this->backpropagation(this->layer[this->depth - 1].output, this->target[data]);
+		this->backpropagation(this->layer[this->depth - 1].output[data], this->target[data], data);
 		
-		write(data ,input[data], target[data], this->layer[this->depth - 1].output);
+		if(data%1000 == 0)
+			write(data ,input[data], target[data], this->layer[this->depth - 1].output[data]);
 	}
+	std::cout << cost() << std::endl;
 }
 
 bool NNClass::allocate_layers()
@@ -86,7 +88,7 @@ bool NNClass::allocate_layers()
 		//Neurons | set to 0
 		this->layer[layer].theta.resize(this->layer_size[layer], 0); 
 		this->layer[layer].delta.resize(this->layer_size[layer], 0);  
-		this->layer[layer].output.resize(this->layer_size[layer], 0);
+		this->layer[layer].output.resize(this->data_size, std::vector<float>(this->layer_size[layer]));
 	}
 	return true;
 }
@@ -112,17 +114,17 @@ bool NNClass::randomize_weigths()
 	return true;
 }
 
-//Com
-bool NNClass::backpropagation(std::vector<float> output, std::vector<float> target)
+//Com										  //fix this
+bool NNClass::backpropagation(std::vector<float> output, std::vector<float> target, int data)
 {
 	//Setup pointers for easier reading??
 	
 	//Update
 	for(int index = 0; index < layer_size[this->depth - 1]; index++)
 		this->layer[this->depth - 1].delta[index] = 
-			(target[index] - this->layer[this->depth - 1].output[index]) * 
-			this->layer[this->depth - 1].output[index] * 
-			(1 - this->layer[this->depth - 1].output[index]);
+			(target[index] - this->layer[this->depth - 1].output[data][index]) * 
+			this->layer[this->depth - 1].output[data][index] * 
+			(1 - this->layer[this->depth - 1].output[data][index]);
 
 	//Hidden delta update
 	for(int layer = this->depth - 2; layer >= 0; layer--)
@@ -136,7 +138,7 @@ bool NNClass::backpropagation(std::vector<float> output, std::vector<float> targ
 				sum += this->layer[layer + 1].delta[weight_index] * this->layer[layer + 1].weight[index][weight_index];
 
 			//Calculate delta for current layer and group
-			this->layer[layer].delta[index] = this->layer[layer].output[index] * (1 - this->layer[layer].output[index]) * sum;
+			this->layer[layer].delta[index] = this->layer[layer].output[data][index] * (1.0f - this->layer[layer].output[data][index]) * sum;
 		}
 	}
 
@@ -147,7 +149,7 @@ bool NNClass::backpropagation(std::vector<float> output, std::vector<float> targ
 		std::vector<float> layer_output;
 		if(layer > 0){
 			amount_weight_group = this->layer_size[layer - 1];
-			layer_output = this->layer[layer - 1].output;
+			layer_output = this->layer[layer - 1].output[data]; // <-- yes this...
 		}
 		else{
 			amount_weight_group = this->input_size;
@@ -167,14 +169,16 @@ bool NNClass::backpropagation(std::vector<float> output, std::vector<float> targ
 	return true;
 }
 
-//float NNClass::cost()
-//{
-//	float sum = 0;
-//	for(int index; index < this->data_size; index++) 
-//		sum += pow(this->target[index] - this->layer[this->depth - 1].output, 2);
-//	
-//	return 1/(2*(this->data_size))*sum
-//}
+float NNClass::cost()
+{
+	float sum = 0;
+	for(int data = 0; data < this->data_size; data++)
+	{ 
+		for(int index = 0; index < this->layer_size[this->depth - 1]; index++)
+			sum += pow(this->target[data][index] - this->layer[this->depth - 1].output[data][index], 2);
+	}	
+	return (1/(2*(this->data_size)))*sum;
+}
 
 float NNClass::activation(int layer, int index, std::vector<float> input)
 {
