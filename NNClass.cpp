@@ -154,7 +154,7 @@ bool NNClass::backpropagation(std::vector<float> output, std::vector<float> targ
 		else{
 			amount_weight_group = this->input_size;
 			layer_output = output;
-		}
+		}z
 
 		//Update
 		for(int index = 0; index < this->layer_size[layer]; index++)
@@ -171,18 +171,40 @@ bool NNClass::backpropagation(std::vector<float> output, std::vector<float> targ
 
 float NNClass::cost()
 {
-	float sum = 0;
+	float sum = 0, sum_weight = 0;
+
+	//Aktivation sum
 	for(int data = 0; data < this->data_size; data++)
-	{ 
+	{
 		for(int index = 0; index < this->layer_size[this->depth - 1]; index++)
-			sum += pow(this->target[data][index] - this->layer[this->depth - 1].output[data][index], 2);
-	}	
-	return (1/(2*(this->data_size)))*sum;
+		{
+			sum += target[data][index] *
+				log(this->layer[this->depth - 1].output[data][index]) +
+				(1 - target[data][index]) *
+				log(1 - this->layer[this->depth - 1].output[data][index]);
+		}
+	}
+
+	//Weight sum
+	for(int layer = 0; layer < this->depth; layer++)
+	{
+		int weight_amount;
+		if(layer > 0)   weight_amount = this->layer_size[layer - 1];
+		else		weight_amount = this->input_size;
+		
+		for(int weight_group = 0; weight_group < weight_amount; weight_group++)
+		{
+			for(int weight = 0; weight < this->layer_size[layer]; weight++)
+				sum_weight += pow(this->layer[layer].weight[weight_group][weight],2);
+		}
+	}
+	std::cout << sum << " " << sum_weight << std::endl;
+					   
+	return -(sum) + (1/(2*this->data_size)) * (sum_weight);
 }
 
 float NNClass::activation(int layer, int index, std::vector<float> input)
-{
-	
+{	
 	//Setup
 	float sum = 0;
 	int amount_weight_group;
