@@ -1,9 +1,9 @@
 //** Notes **
+//  Make more compact
 //  Is saving the output needed?? Cost function looks like it will be needed for proper calculations. But it is an sum so probably it is not needed.
-//  fix misspellings
+//  Fix misspellings
 //  Make the backpropagation work
 //  Implement error checking
-//  Organisize
 
 #include "NNClass.h"
 
@@ -48,6 +48,12 @@ NNClass::NNClass(std::vector<std::vector<float> > &input, std::vector<std::vecto
 	this->layer[0].output = input;
 
 	this->randomize_weigths();
+
+	//Set bias to 1;
+	for(int data = 0; data < this->data_size; data++)
+		for(int layer = 0; layer < this->depth - 2; layer++)
+			this->layer[layer].output[data][this->layer_size[layer] - 1] = 1;
+
 }
 
 //NNClass::load(string filepath){};
@@ -55,15 +61,17 @@ NNClass::NNClass(std::vector<std::vector<float> > &input, std::vector<std::vecto
 
 void NNClass::train()
 {
-	std::cout << this->depth << std::endl;
 	for(int data = 0; data < this->data_size; data++)
 	{
 		for(int layer = 1; layer < this->depth; layer++)
 			for(int index = 0; index < this->layer_size[layer]; index++)
-				this->layer[layer].output[data][index] = activation(layer, index, this->layer[layer - 1].output[data]);
-
-		backpropagation();
-
+			{
+				//float act = activation(layer, index, data);
+				//std::cout << "layer = " << layer << " | index = " << index << " | activation = " << act << std::endl;
+				this->layer[layer].output[data][index] = activation(layer, index, data);
+			}
+		backpropagation(data);
+		
 		if(data%1000 == 0) 
 			write(data ,this->layer[0].output[data], this->target[data], this->layer[this->depth - 1].output[data]);
 	}
@@ -71,7 +79,7 @@ void NNClass::train()
 }
 
 bool NNClass::allocate_layers()
-{
+{	
 	//Allocate layer pointer array of set depth
 	this->layer.resize(this->depth);
 	
@@ -82,10 +90,9 @@ bool NNClass::allocate_layers()
 		if(layer < this->depth - 1)
 		{
 			this->layer[layer].weight.resize(this->layer_size[layer], std::vector<float>(this->layer_size[layer + 1])); 
-			this->layer[layer].bias.resize(this->layer_size[layer], 1); 
 		}
 		
-		this->layer[layer].delta.resize(this->layer_size[layer], 0);  
+		this->layer[layer].delta.resize(this->layer_size[layer], 0);
 		this->layer[layer].output.resize(this->data_size, std::vector<float>(this->layer_size[layer]));
 	}
 	return true;
@@ -105,9 +112,66 @@ bool NNClass::randomize_weigths()
 }
 
 
-bool NNClass::backpropagation()
+bool NNClass::backpropagation(int data)
 {
-	
+	//Output Delta
+	for(int index = 0; index < this->layer_size[this->depth - 1]; index++)
+		this->layer[this->depth - 1].delta[index] = this->layer[this->depth - 1].output[data][index] - this->target[data][index];
+
+
+	//Hidden delta
+	for(int layer = this->depth - 2; layer > 0; layer--)
+	{
+		std::vector<float> sum(this->layer_size[layer], 0);
+		for(int weight = 0; weight < this->layer_size[layer + 1]; weight++)
+		{
+			for(int index = 0; index < this->layer_size[layer]; index++)
+			{
+				sum[index] += (this->layer[layer].weight[index][weight] * this->layer[layer + 1].delta[weight]);				
+				
+			}
+
+		}
+
+		for(int index = 0; index < this->layer_size[layer]; index++)
+		{
+			this->layer[layer].delta[index] = sum[index] * this->layer[layer].output[data][index];
+		}
+
+		std::vector<std::vector<float> > weight_error;
+		weight_error.resize(this->layer_size[layer], std::vector<float>(this->layer_size[layer + 1]));		
+		//comp
+		for(int index = 0; index < this->layer_size[layer]; index++)
+		{	
+			if(index > 0)
+			{
+				for(int weight = 0; weight < this->layer_size[layer + 1]; weight++)
+				{
+					weight_error[index][weight] = (1.0f/2.0f) * (this->layer[layer].output[data][index] * this->layer[layer + 1].delta[weight] + this->layer[layer].weight[index][weight]);
+				}
+			}
+			else
+			{ 
+				for(int weight = 0; weight < this->layer_size[layer + 1]; weight++)
+				{
+					weight_error[index][weight] = (1.0f/2.0f) * (this->layer[layer].output[data][index] * this->layer[layer + 1].delta[weight]);
+				}
+			}
+		}
+		
+		//update weights;
+		for(int index = 0; index < this->layer_size[layer]; index++)
+		{
+			for(int weight = 0; weight < this->layer_size[layer + 1]; weight++)
+			{
+				float grad = -(this->constant * weight_error[index][weight]);
+				//std::cout << "grad = " << grad << std::endl;
+				this->layer[layer].weight[index][weight] += grad;
+				
+			}
+		}
+	}
+
 	return true;
 }
 
@@ -116,14 +180,23 @@ bool NNClass::backpropagation()
 //	return true;
 //}
 
-float NNClass::activation(int layer, int index, std::vector<float> input)
+float NNClass::activation(int layer, int weight, int data)
 {	
 	//Setup
 	float sum = 0;
 	//Calculate
-	for(int weight_group = 0; weight_group < this->layer_size[layer - 1]; weight_group++)
-		sum =+ this->layer[layer - 1].weight[weight_group][index] * input[weight_group];
+	for(int index = 0; index < this->layer_size[layer - 1]; index++)
+	{
+		float x,y;
+ 		y = this->layer[layer - 1].weight[index][weight];
+		x = this->layer[layer - 1].output[data][index];
+	
+//		std::cout << "x = " << x << std::endl;
+//		std::cout << "y = " << y << std::endl;
+		sum = sum + (x * y);
+	}
 
+//	std::cout << "sum = " << sum << std::endl;
 	//Sigmoid activation
 	return 1/(1+exp(-(sum)));
 

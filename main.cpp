@@ -21,7 +21,7 @@ int main()
 	
 	//Network setup
 	std::vector<int> hidden_layer_size(DEPTH);
-	hidden_layer_size = {3, 3, 3, 8};
+	hidden_layer_size = {6, 10, 10, 8};
 
 	//Create Data
 	for(int data = 0; data < DATA_SIZE; data++)
@@ -46,7 +46,7 @@ int main()
 	}
 	
 	//Start training;
-	NNClass NN(input, target, hidden_layer_size, 0.005);
+	NNClass NN(input, target, hidden_layer_size, 0.000005);
 	NN.train();
 	
 	//NN.destroy();

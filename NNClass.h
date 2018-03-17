@@ -27,7 +27,6 @@ class NNClass
 		//Also keeps the information of the delta value for the neurons in the layer.
 		struct Layer_struct
 		{
-			std::vector<float> bias;
 			std::vector<float> delta;
 			std::vector<std::vector<float> > output;
 			std::vector<std::vector<float> > weight;
@@ -48,7 +47,7 @@ class NNClass
 
 		//Alghoritms
 		//float cost();
-		bool backpropagation();   
-		float activation(int layer, int index, std::vector<float> input);    // Needs to be specified.
+		bool backpropagation(int data);   
+		float activation(int layer, int index, int data);    // Needs to be specified.
 };
 #endif
