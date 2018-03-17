@@ -27,7 +27,7 @@ class NNClass
 		//Also keeps the information of the delta value for the neurons in the layer.
 		struct Layer_struct
 		{
-			std::vector<float> theta;
+			std::vector<float> bias;
 			std::vector<float> delta;
 			std::vector<std::vector<float> > output;
 			std::vector<std::vector<float> > weight;
@@ -35,7 +35,6 @@ class NNClass
 
 		std::vector<int> layer_size; // Holds the number of neurons in each layer
 		std::vector<Layer_struct> layer;
-		std::vector<std::vector<float> > input;
 		std::vector<std::vector<float> > target;		
 
 		float constant; // Learning rate
@@ -48,8 +47,8 @@ class NNClass
 		bool randomize_weigths(); // Randomizes weights
 
 		//Alghoritms
-		float cost();
-		bool backpropagation(std::vector<float> output, std::vector<float> target, int data);   
+		//float cost();
+		bool backpropagation();   
 		float activation(int layer, int index, std::vector<float> input);    // Needs to be specified.
 };
 #endif

@@ -2,7 +2,7 @@
 #include <bitset>
 
 #define INPUT_SIZE 1
-#define DEPTH 4
+#define DEPTH 5
 #define OUTPUT_SIZE 8
 #define DATA_SIZE 1000000
 
@@ -20,8 +20,8 @@ int main()
 	std::vector<std::vector<float>> target(DATA_SIZE); 
 	
 	//Network setup
-	std::vector<int> layer_size(DEPTH);
-	layer_size = {3, 3, 3, 8};
+	std::vector<int> hidden_layer_size(DEPTH);
+	hidden_layer_size = {3, 3, 3, 8};
 
 	//Create Data
 	for(int data = 0; data < DATA_SIZE; data++)
@@ -46,7 +46,7 @@ int main()
 	}
 	
 	//Start training;
-	NNClass NN(input, target, layer_size, 0.005);
+	NNClass NN(input, target, hidden_layer_size, 0.005);
 	NN.train();
 	
 	//NN.destroy();
