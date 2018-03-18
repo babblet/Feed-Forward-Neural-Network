@@ -15,7 +15,7 @@
 class NNClass
 {
 	public:
-		NNClass(std::vector<std::vector<float> > &input, std::vector<std::vector<float> > &target, std::vector<int> &layer_size, float constant); //Create a Neural Network with specified size
+		NNClass(std::vector<std::vector<float> > &input, std::vector<std::vector<float> > &target, std::vector<int> &layer_size, float constant, int epoch); //Create a Neural Network with specified size
 		
 		void train();   // Train Feedforward Neural Network with input as an float array
 		// load(string filepath);         	    // Load Neural Network
@@ -40,13 +40,14 @@ class NNClass
 		int depth;    	// Depth of current Neural Network
 		int input_size; // Size of the given input
 		int data_size;
+		int epoch;
 	
 		//Setup functions
 		bool allocate_layers();   // Allocates the layer struct
 		bool randomize_weigths(); // Randomizes weights
 
 		//Alghoritms
-		//float cost();
+		float cost();
 		bool backpropagation(int data);   
 		float activation(int layer, int index, int data);    // Needs to be specified.
 };

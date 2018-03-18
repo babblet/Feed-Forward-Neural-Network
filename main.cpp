@@ -1,57 +1,42 @@
 #include "NNClass.h"
-#include <bitset>
+#include <cmath>
 
 #define INPUT_SIZE 1
 #define DEPTH 5
-#define OUTPUT_SIZE 8
-#define DATA_SIZE 1000000
+#define OUTPUT_SIZE 1
+#define DATA_SIZE 100000
+#define PI 3.14159
+#define EPOCH 100
 
-//int to binary string
-std::string binary(int decimal) { return std::bitset<8>(decimal).to_string(); }
-
-//Decimal to binary network
+//sin function test
 int main()
 {
 	srand(time(NULL));
 
-	int decimal;
+	int angle;
 	std::string string_target;
 	std::vector<std::vector<float>> input(DATA_SIZE); 
 	std::vector<std::vector<float>> target(DATA_SIZE); 
 	
 	//Network setup
 	std::vector<int> hidden_layer_size(DEPTH);
-	hidden_layer_size = {6, 10, 10, 8};
+	hidden_layer_size = {3, 10, 3,OUTPUT_SIZE}; //temp output
 
 	//Create Data
 	for(int data = 0; data < DATA_SIZE; data++)
 	{
-		decimal = (rand() % 256);
-		string_target = binary(decimal);
+		angle = rand() % 179 + 1;
 
 		input[data].resize(INPUT_SIZE); 
 		target[data].resize(OUTPUT_SIZE); 
 
-		input [data][0] = decimal;
-		
-		//Hardcode testing
-		target[data][0] = string_target[0] - '0'; 
-		target[data][1] = string_target[1] - '0'; 
-		target[data][2] = string_target[2] - '0'; 
-		target[data][3] = string_target[3] - '0'; 
-		target[data][4] = string_target[4] - '0'; 
-		target[data][5] = string_target[5] - '0'; 
-		target[data][6] = string_target[6] - '0'; 
-		target[data][7] = string_target[7] - '0'; 
+		//Hardcode testinge
+		input[data][0] = ((float)angle*(float)PI/180);		
+		target[data][0] = sin((float)angle*(float)PI/180); 
 	}
 	
 	//Start training;
-	NNClass NN(input, target, hidden_layer_size, 0.000005);
+	NNClass NN(input, target, hidden_layer_size, 0.05f , EPOCH);
 	NN.train();
-	
-	//NN.destroy();
-
-	//Free data vetors???
-
 	return 0;
 }
