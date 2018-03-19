@@ -6,7 +6,7 @@
 #define OUTPUT_SIZE 1
 #define DATA_SIZE 100000
 #define PI 3.14159
-#define EPOCH 100
+#define EPOCH 40
 
 //sin function test
 int main()

@@ -64,8 +64,42 @@ NNClass::NNClass(std::vector<std::vector<float> > &input, std::vector<std::vecto
 	}
 }
 
-//NNClass::load(string filepath){};
-//NNClass::save(string path, string filename){};
+//NNClass::load(string filename){}
+bool NNClass::save(std::string filename)
+{
+	std::ofstream file;
+	file.open (filename);
+	
+
+	//save structure
+	for(int layer = 0; layer < this->depth; layer++)
+	{
+		file << this->layer_size[layer] << ",";
+	}
+	file << ";\n";
+
+	//save weights
+	for(int layer = 0; layer < this->depth - 1; layer++)
+	{
+		for(int index = 0; index < this->layer_size[layer]; index++)
+		{
+			for(int weight = 0; weight < this->layer_size[layer + 1]; weight++)
+			{
+				
+				std::cout << this->layer[layer].weight[index][weight] << ",";
+				file << this->layer[layer].weight[index][weight] << ",";
+			}
+			std::cout << "\n";
+			file << "\n";
+		}
+		std::cout << ";\n";
+		file << ";\n";
+	}
+	
+	file.close();
+	//test;
+	return true;
+}
 
 void NNClass::train()
 {
@@ -93,6 +127,7 @@ void NNClass::train()
 		}
 		c = cost();
 	}
+	save("test");
 }
 
 bool NNClass::allocate_layers()

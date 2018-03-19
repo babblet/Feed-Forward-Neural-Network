@@ -5,6 +5,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <iostream>
+#include <fstream>
 
 //NNClass:
 //  Feedforward Neural Network with dynamic sizing.
@@ -19,7 +20,7 @@ class NNClass
 		
 		void train();   // Train Feedforward Neural Network with input as an float array
 		// load(string filepath);         	    // Load Neural Network
-		// save(string path, string filename);      // Save Neural Network
+		bool save(std::string filename);      // Save Neural Network
 
 	private:
 		//Layer Data, Keeps the information of a single layer.
