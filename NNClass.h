@@ -16,12 +16,11 @@
 class NNClass
 {
 	public:
-		NNClass(std::vector<std::vector<float> > &input, std::vector<std::vector<float> > &target, std::vector<int> &layer_size, float constant, int epoch); //Create a Neural Network with specified size
-		
-		void train();   // Train Feedforward Neural Network with input as an float array
-		// load(string filepath);         	    // Load Neural Network
-		bool save(std::string filename);      // Save Neural Network
-
+		NNClass(int data_size, std::vector<int> &layer_size); //Create a Neural Network with specified size
+		NNClass(int data_size, std::string &filename);
+		void train(std::vector<std::vector<float> > &input, std::vector<std::vector<float> > &target, float constant, int epochs);
+		void save(std::string filename);      // Save Neural Network
+		void destroy(){delete this;};
 	private:
 		//Layer Data, Keeps the information of a single layer.
 		//A layer is with the weights as input to a neuron and its output.
@@ -45,7 +44,7 @@ class NNClass
 	
 		//Setup functions
 		bool allocate_layers();   // Allocates the layer struct
-		bool randomize_weigths(); // Randomizes weights
+		bool randomize_weights(); // Randomizes weights
 
 		//Alghoritms
 		float cost();

@@ -1,8 +1,6 @@
 //** Notes **
+//  Fix destructor
 //  Make more compact
-//  Is saving the output needed?? Cost function looks like it will be needed for proper calculations. But it is an sum so probably it is not needed.
-//  Fix misspellings
-//  Make the backpropagation work
 //  Implement error checking
 
 #include "NNClass.h"
@@ -30,31 +28,24 @@ bool write(float cost, int iteration, int epoch, std::vector<float> input, std::
 	return 0;
 }
 
-NNClass::NNClass(std::vector<std::vector<float> > &input, std::vector<std::vector<float> > &target, std::vector<int> &hidden_layer_size, float constant, int epoch)
+NNClass::NNClass(int data_size, std::vector<int> &layer_size)
 {
-	//Add bias to hidden layer //
-	for(int index = 0; index < hidden_layer_size.size(); index++)
+	//data	
+	this->data_size = data_size;
+
+	//layers
+	for(int index = 0; index < layer_size.size(); index++)
 	{
-		hidden_layer_size[index] += 1;
+		layer_size[index] += 1;
 	}
-	this->data_size = input.size();
-	this->input_size = input[0].size() + 1; //+ 1 == bias
-	this->epoch = epoch;
-
-	this->target = target;
-
-	this->layer_size.push_back(this->input_size);
-	this->layer_size.insert(std::end(this->layer_size), std::begin(hidden_layer_size), std::end(hidden_layer_size));
+	this->layer_size = layer_size;
 	this->depth = this->layer_size.size();
-
-	this->constant = constant;
 	
+	//Alloc
 	this->allocate_layers();
-	this->layer[0].output = input;
 
-	this->randomize_weigths();
-
-	//set bias in hidden layers to 1;
+	//Setup
+	this->randomize_weights();
 	for(int data = 0; data < this->data_size; data++)
 	{
 		for(int layer = 0; layer < this->depth - 1; layer++)
@@ -64,19 +55,75 @@ NNClass::NNClass(std::vector<std::vector<float> > &input, std::vector<std::vecto
 	}
 }
 
-//NNClass::load(string filename){}
-bool NNClass::save(std::string filename)
+NNClass::NNClass(int data_size, std::string &filename) // Load 
+{
+	std::ifstream file(filename);
+	std::string str;
+	std::vector<std::string> data;
+	int p, weight, index, layer;
+
+	while(std::getline(file, str))
+	{
+		data.push_back(str);
+	}
+
+	//Get structure
+	p = 0;
+	for(int index = 0; index < data[0].length(); index++)
+	{
+		if(data[0][index] == '\n') break;
+		else if(data[0][index] == ' ')
+		{
+			this->layer_size.push_back(atoi(data[0].substr(p, index - p).c_str()));
+			p = index + 1;
+		}
+	}
+
+	this->depth = this->layer_size.size();
+	this->data_size = data_size;
+	this->allocate_layers();
+
+	//Get weights
+	p = 0;
+	weight = 0;
+	index = 0;
+	layer = 0;
+	for(int data_index = 0; data_index < data[1].length(); data_index++)
+	{
+		if(data[1][data_index] == '\n') break;
+		else if(data[1][data_index] == ' ')
+		{
+			this->layer[layer].weight[index][weight] = atof(data[1].substr(p, data_index - p).c_str());
+			p = data_index + 1;
+
+			weight++;
+			if(weight == this->layer_size[layer + 1])
+			{
+				weight = 0;
+				index++;
+				if(index == this->layer_size[layer])
+				{
+					index = 0;
+					layer++;
+				}
+			}
+		}
+	}
+	file.close();
+}
+
+void NNClass::save(std::string filename)
 {
 	std::ofstream file;
 	file.open (filename);
 	
-
+	
 	//save structure
 	for(int layer = 0; layer < this->depth; layer++)
 	{
-		file << this->layer_size[layer] << ",";
+		file << this->layer_size[layer] << " ";
 	}
-	file << ";\n";
+	file << "\n";
 
 	//save weights
 	for(int layer = 0; layer < this->depth - 1; layer++)
@@ -84,50 +131,44 @@ bool NNClass::save(std::string filename)
 		for(int index = 0; index < this->layer_size[layer]; index++)
 		{
 			for(int weight = 0; weight < this->layer_size[layer + 1]; weight++)
-			{
-				
-				std::cout << this->layer[layer].weight[index][weight] << ",";
-				file << this->layer[layer].weight[index][weight] << ",";
+			{				
+				file << this->layer[layer].weight[index][weight] << " ";
 			}
-			std::cout << "\n";
-			file << "\n";
 		}
-		std::cout << ";\n";
-		file << ";\n";
 	}
-	
 	file.close();
-	//test;
-	return true;
 }
 
-void NNClass::train()
+void NNClass::train(std::vector<std::vector<float> > &input, std::vector<std::vector<float> > &target, float constant, int epochs)
 {
 	srand(time(NULL));
-	float c = 0;
-	for(int epoch = 0; epoch < this->epoch; epoch++)
+	this->constant = constant;
+	this->target = target;
+	this->layer[0].output = input;
+	float cost_v = 0;
+
+	for(int epoch = 0; epoch < epochs; epoch++)
 	{
-		int r = (rand() % 1000);
+		int random = (rand() % 1000);
 		for(int data = 0; data < this->data_size; data++)
 		{
 			//Feedforward
 			for(int layer = 1; layer < this->depth; layer++)
-			{			 // No weights connecting to bias
-				for(int index = 0; index < this->layer_size[layer] - 1; index++) // -1, no activation on bias layer and hack for last layer with bias
+			{
+				for(int index = 0; index < this->layer_size[layer] - 1; index++)
 				{	
 					this->layer[layer].output[data][index] = activation(layer, index, data);
 				}
 			}
 			backpropagation(data);
-		
-			if(data%(10000 + r) == 0)
+
+			if(data%(10000 + random) == 0)
 			{ 	
-				write(c ,data, epoch, this->layer[0].output[data], this->target[data], this->layer[this->depth - 1].output[data]);
+				write(cost_v, data, epoch, this->layer[0].output[data], this->target[data], this->layer[this->depth - 1].output[data]);
 			}
 		}
-		c = cost();
+		cost_v = cost();
 	}
-	save("test");
 }
 
 bool NNClass::allocate_layers()
@@ -148,11 +189,11 @@ bool NNClass::allocate_layers()
 	return true;
 }
 
-bool NNClass::randomize_weigths()
+bool NNClass::randomize_weights()
 {
 	srand(time(NULL));
 
-	//Set random weigths
+	//Set random weights
 	for(int layer = 0; layer < this->depth - 1; layer++)
 	{
 		for(int weight_group = 0; weight_group < this->layer_size[layer]; weight_group++)
@@ -226,7 +267,6 @@ float NNClass::cost()
 
 float NNClass::activation(int layer, int weight, int data)
 {	
-	//std::cout << this->depth << " | "<< layer << " | " << weight << std::endl;
 	float sum = 0;
 	for(int index = 0; index < this->layer_size[layer - 1]; index++)
 	{

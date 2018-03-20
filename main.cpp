@@ -6,21 +6,24 @@
 #define OUTPUT_SIZE 1
 #define DATA_SIZE 100000
 #define PI 3.14159
-#define EPOCH 40
+#define EPOCH 500
+#define CONSTANT 0.005f
+#define FILENAME "sin_weights"
 
-//sin function test
+//  sin function test
 int main()
 {
 	srand(time(NULL));
 
 	int angle;
+	std::string filename = FILENAME;
 	std::string string_target;
 	std::vector<std::vector<float>> input(DATA_SIZE); 
 	std::vector<std::vector<float>> target(DATA_SIZE); 
 	
 	//Network setup
-	std::vector<int> hidden_layer_size(DEPTH);
-	hidden_layer_size = {3, 10, 3,OUTPUT_SIZE}; //temp output
+	std::vector<int> layer_size(DEPTH);
+	layer_size = {INPUT_SIZE, 3, 10, 3, OUTPUT_SIZE};
 
 	//Create Data
 	for(int data = 0; data < DATA_SIZE; data++)
@@ -36,7 +39,16 @@ int main()
 	}
 	
 	//Start training;
-	NNClass NN(input, target, hidden_layer_size, 0.05f , EPOCH);
-	NN.train();
+	//NNClass NN(DATA_SIZE, layer_size);
+	//NN.train(input, target, CONSTANT, EPOCH);
+	//NN.save(filename);
+	//NN.destroy();
+
+	//Reload training
+	NNClass NN2(DATA_SIZE, filename);
+	NN2.train(input, target, CONSTANT, EPOCH);
+	NN2.save(filename);
+	//NN2.destroy();
+	
 	return 0;
 }
