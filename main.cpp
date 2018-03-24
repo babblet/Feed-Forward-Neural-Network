@@ -18,12 +18,13 @@ int main()
 	int angle;
 	std::string filename = FILENAME;
 	std::string string_target;
-	std::vector<std::vector<float>> input(DATA_SIZE); 
-	std::vector<std::vector<float>> target(DATA_SIZE); 
+	std::vector<std::vector<float> > input(DATA_SIZE); 
+	std::vector<std::vector<float> > target(DATA_SIZE); 
 	
 	//Network setup
 	std::vector<int> layer_size(DEPTH);
-	layer_size = {INPUT_SIZE, 3, 10, 3, OUTPUT_SIZE};
+       	int layer_size_content[] = {INPUT_SIZE, 3, 10, 3, OUTPUT_SIZE};
+	layer_size.insert(layer_size.begin(), layer_size_content, layer_size_content+DEPTH);
 
 	//Create Data
 	for(int data = 0; data < DATA_SIZE; data++)

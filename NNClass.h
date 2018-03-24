@@ -30,9 +30,7 @@ class NNClass
 
 		float constant; // Learning rate
 		int depth;    	// Depth of current Neural Network
-		int input_size;
 		int data_size;
-		int epoch;
 	
 		//Setup functions
 		bool allocate_layers();
