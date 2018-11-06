@@ -12,7 +12,7 @@ WARN= -Wall
 
 CXXFLAGS= $(OPT) $(DEBUG) $(WARN) $(INCDIR)
 
-INC = NNClass.h
+INC = NNClass.hpp
 SRC = NNClass.cpp main.cpp
 
 OBJ = $(SRC:.cpp=.o)

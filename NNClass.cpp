@@ -3,7 +3,7 @@
 //  Make more compact
 //  Implement error checking
 
-#include "NNClass.h"
+#include "NNClass.hpp"
 
 //This is temp
 bool write(float cost, int iteration, int epoch, std::vector<float> input, std::vector<float> target, std::vector<float> output)

@@ -1,4 +1,4 @@
-#include "NNClass.h"
+#include "NNClass.hpp"
 #include <cmath>
 
 #define INPUT_SIZE 1
